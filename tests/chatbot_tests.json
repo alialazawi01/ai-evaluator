@@ -1,0 +1,20 @@
+[
+    {
+        "id": "test_001",
+        "input": "What is the capital of Sweden?",
+        "expected_output": "Stockholm",
+        "difficulty": "easy"
+    },
+    {
+        "id": "test_002",
+        "input": "What is 25 * 17?",
+        "expected_output": "425",
+        "difficulty": "easy"
+    },
+    {
+        "id": "test_003",
+        "input": "What is the capital of France?",
+        "expected_output": "Paris",
+        "difficulty": "easy"
+    }
+]
