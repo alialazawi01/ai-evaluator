@@ -1,5 +1,5 @@
-from src.core.check import Check
-from src.core.models import (
+from ai_evaluator.core.check import Check
+from ai_evaluator.core.models import (
     TestCase,
     ExecutionResult,
     CheckResult
@@ -7,6 +7,8 @@ from src.core.models import (
 
 
 class ExactMatchCheck(Check):
+
+    name = "exact_match"
 
     def evaluate(
         self,
@@ -16,11 +18,11 @@ class ExactMatchCheck(Check):
 
         passed = (
             result.output.strip()
-            == test_case.expected_output.strip()
+            == test_case.expected.strip()
         )
 
         return CheckResult(
-            name="exact_match",
+            name=self.name,
             score=1.0 if passed else 0.0,
             passed=passed,
             reason=(

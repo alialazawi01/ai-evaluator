@@ -1,12 +1,8 @@
+# Temporary demo until the `ai-eval` CLI exists (build step 3).
 import json
 
-from src.core.models import TestCase
-from src.core.evaluator import Evaluator
-
-from src.adapters.chatbot import ChatbotAdapter
-
-from src.checks.exact_match import ExactMatchCheck
-from src.checks.latency import LatencyCheck
+from ai_evaluator import FunctionTarget, Runner, TestCase
+from ai_evaluator.checks import ExactMatchCheck, LatencyCheck
 
 
 def fake_chatbot(prompt: str) -> str:
@@ -22,7 +18,7 @@ def fake_chatbot(prompt: str) -> str:
 
 def load_test_cases():
 
-    with open("tests/chatbot_tests.json") as file:
+    with open("datasets/chatbot_tests.json") as file:
         data = json.load(file)
 
     return [
@@ -33,29 +29,25 @@ def load_test_cases():
 
 def main():
 
-    test_cases = load_test_cases()
-
-    adapter = ChatbotAdapter(
-        chatbot=fake_chatbot
+    runner = Runner(
+        target=FunctionTarget(fake_chatbot),
+        checks=[
+            ExactMatchCheck(),
+            LatencyCheck(max_ms=100)
+        ]
     )
 
-    checks = [
-        ExactMatchCheck(),
-        LatencyCheck(max_ms=100)
-    ]
+    report = runner.run(load_test_cases())
 
-    evaluator = Evaluator(
-        adapter=adapter,
-        checks=checks
-    )
+    for case in report.cases:
 
-    results = evaluator.run(test_cases)
+        print(f"\n{case.test_case.id}")
 
-    for result in results:
+        if case.error:
+            print(f"  ERROR: {case.error}")
+            continue
 
-        print(f"\n{result.test_case_id}")
-
-        for check in result.checks:
+        for check in case.checks:
 
             status = "PASS" if check.passed else "FAIL"
 
@@ -66,6 +58,11 @@ def main():
             )
 
             print(f"    {check.reason}")
+
+    print(
+        f"\nPassed {report.passed}/{report.total} "
+        f"({report.pass_rate:.0%})"
+    )
 
 
 if __name__ == "__main__":

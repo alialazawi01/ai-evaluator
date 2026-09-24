@@ -1,5 +1,5 @@
-from src.core.check import Check
-from src.core.models import (
+from ai_evaluator.core.check import Check
+from ai_evaluator.core.models import (
     TestCase,
     ExecutionResult,
     CheckResult
@@ -7,6 +7,8 @@ from src.core.models import (
 
 
 class LatencyCheck(Check):
+
+    name = "latency"
 
     def __init__(self, max_ms: float):
         self.max_ms = max_ms
@@ -25,7 +27,7 @@ class LatencyCheck(Check):
         )
 
         return CheckResult(
-            name="latency",
+            name=self.name,
             score=score,
             passed=passed,
             reason=f"Latency: {result.latency_ms:.2f} ms"

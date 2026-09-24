@@ -4,6 +4,9 @@ from .models import TestCase, ExecutionResult, CheckResult
 
 
 class Check(ABC):
+    """Judges the output of one test case."""
+
+    name: str = "check"
 
     @abstractmethod
     def evaluate(
