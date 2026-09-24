@@ -3,6 +3,7 @@ import sys
 
 from ai_evaluator.config import ConfigError, load_config
 from ai_evaluator.core.runner import Runner
+from ai_evaluator.judges import JudgeError
 from ai_evaluator.report import print_report, save_report
 
 
@@ -54,12 +55,30 @@ def run(args: argparse.Namespace) -> int:
         print(f"Config error: {error}", file=sys.stderr)
         return EXIT_CONFIG_ERROR
 
+    if config.judge and config.uses_judge:
+        try:
+            config.judge.check_ready()
+        except JudgeError as error:
+            print(f"Judge error: {error}", file=sys.stderr)
+            return EXIT_CONFIG_ERROR
+
     print(
         f"Running {len(config.test_cases)} test cases "
         f"against {config.target.name}"
+        + (
+            f" (judge: {config.judge.name} {config.judge.model})"
+            if config.judge and config.uses_judge else ""
+        )
     )
 
-    report = Runner(config.target, config.checks).run(config.test_cases)
+    report = Runner(config.target, config.checks).run(
+        config.test_cases,
+        on_case_done=show_progress if sys.stderr.isatty() else None
+    )
+
+    if sys.stderr.isatty():
+        # Clear the progress line.
+        print("\r\033[K", end="", file=sys.stderr)
 
     print_report(report, verbose=args.verbose)
 
@@ -68,6 +87,15 @@ def run(args: argparse.Namespace) -> int:
         print(f"\nSaved run to {path}")
 
     return EXIT_PASSED if report.passed == report.total else EXIT_FAILED
+
+
+def show_progress(number: int, total: int, case) -> None:
+    print(
+        f"\r\033[K  {number}/{total}  {case.test_case.id}",
+        end="",
+        file=sys.stderr,
+        flush=True
+    )
 
 
 if __name__ == "__main__":

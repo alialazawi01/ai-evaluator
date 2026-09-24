@@ -98,3 +98,17 @@ def test_case_checks_run_after_runner_checks():
 
     assert [c.name for c in case[0].checks] == ["equals_expected", "broken"]
     assert [c.name for c in case[1].checks] == ["equals_expected"]
+
+
+def test_progress_callback_gets_each_case():
+
+    seen = []
+
+    Runner(FunctionTarget(upper), []).run(
+        [TestCase(id="a", input="a"), TestCase(id="b", input="b")],
+        on_case_done=lambda number, total, case: seen.append(
+            (number, total, case.test_case.id)
+        ),
+    )
+
+    assert seen == [(1, 2, "a"), (2, 2, "b")]

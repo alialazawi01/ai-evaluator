@@ -45,3 +45,19 @@ def test_config_error_exits_with_2(capsys, tmp_path):
 
     assert exit_code == 2
     assert "Config error: File not found" in capsys.readouterr().err
+
+
+def test_unreachable_judge_exits_with_2_before_running(capsys, tmp_path):
+
+    (tmp_path / "cases.yaml").write_text("- {id: a, input: hi, checks: [llm_judge]}\n")
+    (tmp_path / "eval.yaml").write_text(
+        "target: examples.quickstart.bot:ask\ndataset: cases.yaml\n"
+        "judge: {provider: ollama, model: x, url: 'http://127.0.0.1:9'}\n"
+    )
+
+    exit_code = main(["run", str(tmp_path / "eval.yaml"), "--no-save"])
+
+    captured = capsys.readouterr()
+    assert exit_code == 2
+    assert "Judge error: Can't reach Ollama" in captured.err
+    assert "Running" not in captured.out

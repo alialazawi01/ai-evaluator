@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from typing import Callable
 
 from .check import Check
 from .models import TestCase, CheckResult, CaseResult, RunReport
@@ -15,14 +16,24 @@ class Runner:
         self.target = target
         self.checks = checks
 
-    def run(self, test_cases: list[TestCase]) -> RunReport:
+    def run(
+        self,
+        test_cases: list[TestCase],
+        on_case_done: Callable[[int, int, CaseResult], None] | None = None
+    ) -> RunReport:
+        """on_case_done(number, total, result) is called after each case."""
 
         started_at = datetime.now(timezone.utc)
 
-        cases = [
-            self.run_case(test_case)
-            for test_case in test_cases
-        ]
+        cases = []
+
+        for number, test_case in enumerate(test_cases, start=1):
+
+            case = self.run_case(test_case)
+            cases.append(case)
+
+            if on_case_done:
+                on_case_done(number, len(test_cases), case)
 
         return RunReport(
             target=self.target.name,

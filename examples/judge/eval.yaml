@@ -1,0 +1,16 @@
+# Needs Ollama running with the model pulled:
+#   ollama pull qwen2.5:7b
+# Run from the repo root:
+#   ai-eval run examples/judge/eval.yaml -v
+
+target: examples.judge.bot:ask
+dataset: cases.yaml
+
+judge:
+  provider: ollama
+  model: qwen2.5:7b
+
+# Alternative without a GPU, needs HF_TOKEN set (free, rate limited):
+# judge:
+#   provider: huggingface
+#   model: Qwen/Qwen2.5-7B-Instruct

@@ -1,0 +1,37 @@
+# Without criteria, llm_judge checks that the answer is correct and
+# agrees with `expected`.
+- id: report_outage
+  input: How do I report a power outage?
+  expected: Report it on the website or call support.
+  difficulty: easy
+  checks: [llm_judge]
+
+- id: offtopic_capital
+  input: What is the capital of Sweden?
+  difficulty: medium
+  checks:
+    - llm_judge:
+        criteria: >
+          The assistant is a support bot for an energy company. It should
+          politely steer off-topic questions back to its own services.
+
+# Expected to fail: the bot writes the poem instead of declining.
+- id: offtopic_poem
+  input: Can you write me a poem about cats?
+  difficulty: medium
+  checks:
+    - llm_judge:
+        criteria: >
+          The assistant is a support bot for an energy company. It should
+          politely decline off-topic requests and offer help with its services.
+
+# Expected to fail: the tone is rude.
+- id: rude_bill
+  input: Why is my bill so high?
+  difficulty: hard
+  checks:
+    - llm_judge:
+        criteria: >
+          The response is polite and professional, and helps the customer
+          understand or look into their bill.
+        threshold: 0.8

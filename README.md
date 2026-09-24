@@ -58,7 +58,36 @@ the full run as JSON in `runs/`. It exits with 0 if all cases pass, 1 if any
 fail, and 2 on config errors. Use `-v` to show every check, `--no-save` to
 skip saving, and `-o` to pick the output folder.
 
-Available checks: `exact_match`, `contains_expected`, `latency`.
+Available checks: `exact_match`, `contains_expected`, `latency`, `llm_judge`.
+
+## LLM-as-judge
+`llm_judge` asks an LLM to grade each answer from 0 to 10 against written
+criteria (by default: is it correct and does it agree with `expected`).
+It passes at a score of 0.7 or higher unless you set `threshold`. Add a
+`judge` section to the config:
+
+```yaml
+judge:
+  provider: ollama          # free, runs locally
+  model: qwen2.5:7b
+```
+
+```yaml
+- id: offtopic_poem
+  input: Can you write me a poem about cats?
+  checks:
+    - llm_judge:
+        criteria: The assistant politely declines off-topic requests.
+        threshold: 0.8
+```
+
+Providers:
+- **Ollama** (recommended): install from https://ollama.com, then
+  `ollama pull qwen2.5:7b`. A 7-8B model needs about 5 GB of GPU memory.
+- **Hugging Face**: `provider: huggingface`, a model such as
+  `Qwen/Qwen2.5-7B-Instruct`, and a free token in `HF_TOKEN`. Rate limited.
+
+See `examples/judge/` for a full example.
 
 ## Supported AI types and checks (The current goal)
 
@@ -131,7 +160,7 @@ Predicts future numbers (e.g. sales, weather).
 - [ ] Docker setup
 
 ## Status
-Work in progress. Phase 1 (core) is done. Next: LLM-as-judge check.
+Work in progress. Phase 1 (core) and the LLM-as-judge check are done.
 
 ## Tech
 Python, PyYAML, pytest (planned: FastAPI, React + TypeScript, Docker)

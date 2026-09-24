@@ -3,6 +3,9 @@ Loads an eval config file and its dataset into ready-to-run objects.
 
     target: my_bot.app:ask
     dataset: cases.yaml          # relative to this config file
+    judge:                       # only needed for llm_judge checks
+      provider: ollama
+      model: qwen2.5:7b
     default_checks:
       - latency: { max_ms: 3000 }
 """
@@ -18,10 +21,11 @@ from ai_evaluator.checks.registry import build_checks
 from ai_evaluator.core.check import Check
 from ai_evaluator.core.models import DIFFICULTIES, TestCase
 from ai_evaluator.core.target import Target
+from ai_evaluator.judges import Judge, build_judge
 from ai_evaluator.targets.function import FunctionTarget
 
 
-CONFIG_KEYS = {"target", "dataset", "default_checks"}
+CONFIG_KEYS = {"target", "dataset", "judge", "default_checks"}
 CASE_KEYS = {"id", "input", "expected", "difficulty", "checks"}
 
 
@@ -34,6 +38,12 @@ class EvalConfig:
     target: Target
     checks: list[Check]
     test_cases: list[TestCase]
+    judge: Judge | None = None
+
+    @property
+    def uses_judge(self) -> bool:
+        checks = [*self.checks, *(c for t in self.test_cases for c in t.checks)]
+        return any(getattr(check, "needs_judge", False) for check in checks)
 
 
 def load_config(path: str | Path) -> EvalConfig:
@@ -63,16 +73,31 @@ def load_config(path: str | Path) -> EvalConfig:
             f"{path}: could not load target: {type(error).__name__}: {error}"
         )
 
-    checks = checks_from(data.get("default_checks") or [], f"{path}: default_checks")
+    judge = None
+    if data.get("judge") is not None:
+        try:
+            judge = build_judge(data["judge"])
+        except ValueError as error:
+            raise ConfigError(f"{path}: {error}")
+
+    checks = checks_from(
+        data.get("default_checks") or [],
+        f"{path}: default_checks",
+        judge
+    )
 
     return EvalConfig(
         target=target,
         checks=checks,
-        test_cases=load_dataset(path.parent / data["dataset"])
+        test_cases=load_dataset(path.parent / data["dataset"], judge),
+        judge=judge
     )
 
 
-def load_dataset(path: str | Path) -> list[TestCase]:
+def load_dataset(
+    path: str | Path,
+    judge: Judge | None = None
+) -> list[TestCase]:
     """Load test cases from a YAML or JSON list."""
 
     path = Path(path)
@@ -82,7 +107,7 @@ def load_dataset(path: str | Path) -> list[TestCase]:
         raise ConfigError(f"{path}: expected a list of test cases")
 
     test_cases = [
-        parse_case(item, f"{path}: case {number}")
+        parse_case(item, f"{path}: case {number}", judge)
         for number, item in enumerate(data, start=1)
     ]
 
@@ -95,7 +120,7 @@ def load_dataset(path: str | Path) -> list[TestCase]:
     return test_cases
 
 
-def parse_case(item: Any, where: str) -> TestCase:
+def parse_case(item: Any, where: str, judge: Judge | None = None) -> TestCase:
 
     if not isinstance(item, dict):
         raise ConfigError(f"{where}: expected a mapping")
@@ -124,17 +149,21 @@ def parse_case(item: Any, where: str) -> TestCase:
         input=item["input"],
         expected=item.get("expected"),
         difficulty=difficulty,
-        checks=checks_from(item.get("checks") or [], f"{where}: checks")
+        checks=checks_from(item.get("checks") or [], f"{where}: checks", judge)
     )
 
 
-def checks_from(specs: Any, where: str) -> list[Check]:
+def checks_from(
+    specs: Any,
+    where: str,
+    judge: Judge | None = None
+) -> list[Check]:
 
     if not isinstance(specs, list):
         raise ConfigError(f"{where}: expected a list")
 
     try:
-        return build_checks(specs)
+        return build_checks(specs, judge)
     except ValueError as error:
         raise ConfigError(f"{where}: {error}")
 
