@@ -16,14 +16,13 @@ import yaml
 
 from ai_evaluator.checks.registry import build_checks
 from ai_evaluator.core.check import Check
-from ai_evaluator.core.models import TestCase
+from ai_evaluator.core.models import DIFFICULTIES, TestCase
 from ai_evaluator.core.target import Target
 from ai_evaluator.targets.function import FunctionTarget
 
 
 CONFIG_KEYS = {"target", "dataset", "default_checks"}
 CASE_KEYS = {"id", "input", "expected", "difficulty", "checks"}
-DIFFICULTIES = ("easy", "medium", "hard")
 
 
 class ConfigError(Exception):

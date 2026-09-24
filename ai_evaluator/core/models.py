@@ -8,6 +8,9 @@ if TYPE_CHECKING:
     from .check import Check
 
 
+DIFFICULTIES = ("easy", "medium", "hard")
+
+
 @dataclass
 class TestCase:
     # Stops pytest from trying to collect this class as a test.

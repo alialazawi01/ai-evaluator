@@ -3,7 +3,13 @@ import sys
 
 from ai_evaluator.config import ConfigError, load_config
 from ai_evaluator.core.runner import Runner
-from ai_evaluator.report import print_report
+from ai_evaluator.report import print_report, save_report
+
+
+# Exit codes, so scripts and CI can tell the outcomes apart.
+EXIT_PASSED = 0
+EXIT_FAILED = 1
+EXIT_CONFIG_ERROR = 2
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -16,22 +22,37 @@ def main(argv: list[str] | None = None) -> int:
 
     run_parser = commands.add_parser("run", help="Run an eval config")
     run_parser.add_argument("config", help="Path to the eval config file")
+    run_parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        help="Show every check, not only failed ones"
+    )
+    run_parser.add_argument(
+        "-o", "--output-dir",
+        default="runs",
+        help="Folder to save the run report in (default: runs)"
+    )
+    run_parser.add_argument(
+        "--no-save",
+        action="store_true",
+        help="Don't save the run report"
+    )
 
     args = parser.parse_args(argv)
 
     if args.command == "run":
-        return run(args.config)
+        return run(args)
 
-    return 0
+    return EXIT_PASSED
 
 
-def run(config_path: str) -> int:
+def run(args: argparse.Namespace) -> int:
 
     try:
-        config = load_config(config_path)
+        config = load_config(args.config)
     except ConfigError as error:
         print(f"Config error: {error}", file=sys.stderr)
-        return 2
+        return EXIT_CONFIG_ERROR
 
     print(
         f"Running {len(config.test_cases)} test cases "
@@ -40,9 +61,13 @@ def run(config_path: str) -> int:
 
     report = Runner(config.target, config.checks).run(config.test_cases)
 
-    print_report(report)
+    print_report(report, verbose=args.verbose)
 
-    return 0
+    if not args.no_save:
+        path = save_report(report, args.output_dir, config_path=args.config)
+        print(f"\nSaved run to {path}")
+
+    return EXIT_PASSED if report.passed == report.total else EXIT_FAILED
 
 
 if __name__ == "__main__":
