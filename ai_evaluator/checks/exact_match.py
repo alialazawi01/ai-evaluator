@@ -1,3 +1,5 @@
+from typing import Any
+
 from ai_evaluator.core.check import Check
 from ai_evaluator.core.models import (
     TestCase,
@@ -7,8 +9,12 @@ from ai_evaluator.core.models import (
 
 
 class ExactMatchCheck(Check):
+    """Output must equal the expected value. Strings are compared trimmed."""
 
     name = "exact_match"
+
+    def __init__(self, case_sensitive: bool = True):
+        self.case_sensitive = case_sensitive
 
     def evaluate(
         self,
@@ -16,9 +22,17 @@ class ExactMatchCheck(Check):
         result: ExecutionResult
     ) -> CheckResult:
 
+        if test_case.expected is None:
+            return CheckResult(
+                name=self.name,
+                score=0.0,
+                passed=False,
+                reason="Test case has no expected value."
+            )
+
         passed = (
-            result.output.strip()
-            == test_case.expected.strip()
+            self.normalize(result.output)
+            == self.normalize(test_case.expected)
         )
 
         return CheckResult(
@@ -28,6 +42,18 @@ class ExactMatchCheck(Check):
             reason=(
                 "Output matches expected output."
                 if passed
-                else "Output does not match expected output."
+                else (
+                    f"Expected {test_case.expected!r}, "
+                    f"got {result.output!r}."
+                )
             )
         )
+
+    def normalize(self, value: Any) -> Any:
+
+        if not isinstance(value, str):
+            return value
+
+        value = value.strip()
+
+        return value if self.case_sensitive else value.lower()

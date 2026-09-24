@@ -7,10 +7,15 @@ from ai_evaluator.core.models import (
 
 
 class LatencyCheck(Check):
+    """Passes if the call took at most max_ms. Slower calls score lower."""
 
     name = "latency"
 
     def __init__(self, max_ms: float):
+
+        if max_ms <= 0:
+            raise ValueError("max_ms must be greater than 0")
+
         self.max_ms = max_ms
 
     def evaluate(
@@ -30,5 +35,8 @@ class LatencyCheck(Check):
             name=self.name,
             score=score,
             passed=passed,
-            reason=f"Latency: {result.latency_ms:.2f} ms"
+            reason=(
+                f"Latency: {result.latency_ms:.2f} ms "
+                f"(limit {self.max_ms:g} ms)"
+            )
         )
