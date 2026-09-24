@@ -38,10 +38,10 @@
 ## Roadmap
 
 ### Phase 1: Core
-- [ ] Test case format (input, expected output, difficulty)
-- [ ] Run test cases and collect results
-- [ ] Score report
-- [ ] General checks: speed, token usage, cost
+- [x] Test case format (input, expected output, difficulty)
+- [x] Run test cases and collect results
+- [x] Score report
+- [x] General checks: speed (token usage and cost are reported when the AI returns them)
 
 ### Phase 2: Language AI
 - [ ] Chatbot adapter + checks

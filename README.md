@@ -11,17 +11,54 @@ each one is tested differently. I wanted one tool that can test any of them in
 the same structured way.
 
 ## How it works
-[Test cases] → [Core evaluator] → [Adapter] → [AI system]
-                                      ↓
-                                  [Checks] → [Score report]
+[Test cases] → [Runner] → [Target] → [AI system]
+                   ↓
+               [Checks] → [Score report]
 
-- **Core evaluator:** the same for every AI type. Runs the test cases,
+- **Runner:** the same for every AI type. Runs the test cases,
   collects results and builds the report.
-- **Adapters:** each one knows how to talk to one type of AI system.
+- **Targets:** each one knows how to call an AI system (for now: a Python
+  function).
 - **Checks:** plug-ins that score the output. Some work for every AI type,
   some only for one.
 
-Adding a new AI type means adding a new adapter, not rewriting the tool.
+Adding a new AI type means adding new checks (and maybe a target), not
+rewriting the tool. See [docs/architecture.md](docs/architecture.md).
+
+## Quick start
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -e ".[dev]"
+
+ai-eval run examples/quickstart/eval.yaml
+```
+
+An eval is a config file pointing at your AI function and a dataset:
+
+```yaml
+# eval.yaml
+target: my_bot.app:ask        # module:function, imported from where you run
+dataset: cases.yaml           # relative to this file
+default_checks:
+  - latency: { max_ms: 3000 }
+```
+
+```yaml
+# cases.yaml
+- id: capital_sweden
+  input: What is the capital of Sweden?
+  expected: Stockholm
+  difficulty: easy
+  checks: [contains_expected]
+```
+
+The CLI prints each case and a summary by difficulty and check, and saves
+the full run as JSON in `runs/`. It exits with 0 if all cases pass, 1 if any
+fail, and 2 on config errors. Use `-v` to show every check, `--no-save` to
+skip saving, and `-o` to pick the output folder.
+
+Available checks: `exact_match`, `contains_expected`, `latency`.
 
 ## Supported AI types and checks (The current goal)
 
@@ -69,10 +106,10 @@ Predicts future numbers (e.g. sales, weather).
 ## Roadmap
 
 ### Phase 1: Core
-- [ ] Test case format (input, expected output, difficulty)
-- [ ] Run test cases and collect results
-- [ ] Score report
-- [ ] General checks: speed, token usage, cost
+- [x] Test case format (input, expected output, difficulty)
+- [x] Run test cases and collect results
+- [x] Score report
+- [x] General checks: speed (token usage and cost are reported when the AI returns them)
 
 ### Phase 2: Language AI
 - [ ] Chatbot adapter + checks
@@ -94,7 +131,7 @@ Predicts future numbers (e.g. sales, weather).
 - [ ] Docker setup
 
 ## Status
-Work in progress. Currently working on Phase 1.
+Work in progress. Phase 1 (core) is done. Next: LLM-as-judge check.
 
 ## Tech
-Python (planned: FastAPI, React, Docker)
+Python, PyYAML, pytest (planned: FastAPI, React + TypeScript, Docker)
