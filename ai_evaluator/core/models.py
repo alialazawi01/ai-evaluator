@@ -1,6 +1,11 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from .check import Check
 
 
 @dataclass
@@ -12,6 +17,9 @@ class TestCase:
     input: Any
     expected: Any | None = None
     difficulty: str = "medium"
+
+    # Extra checks for this case only, run after the runner's checks.
+    checks: list[Check] = field(default_factory=list)
 
 
 @dataclass

@@ -85,3 +85,16 @@ def test_empty_run():
 
     assert report.total == 0
     assert report.pass_rate == 0.0
+
+
+def test_case_checks_run_after_runner_checks():
+
+    runner = Runner(FunctionTarget(upper), [EqualsExpected()])
+
+    case = runner.run([
+        TestCase(id="t1", input="a", expected="A", checks=[Broken()]),
+        TestCase(id="t2", input="b", expected="B"),
+    ]).cases
+
+    assert [c.name for c in case[0].checks] == ["equals_expected", "broken"]
+    assert [c.name for c in case[1].checks] == ["equals_expected"]

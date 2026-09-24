@@ -1,0 +1,23 @@
+- id: capital_sweden
+  input: What is the capital of Sweden?
+  expected: Stockholm
+  difficulty: easy
+  checks: [contains_expected]
+
+- id: multiplication
+  input: What is 25 * 17?
+  expected: "425"
+  difficulty: easy
+  checks: [exact_match]
+
+- id: capital_france
+  input: What is the capital of France?
+  expected: [Paris]
+  difficulty: easy
+  checks: [contains_expected]
+
+- id: unknown_question
+  input: Who won the 2050 World Cup?
+  expected: [don't know]
+  difficulty: medium
+  checks: [contains_expected]

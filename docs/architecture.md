@@ -42,6 +42,9 @@ default_checks:
 $ ai-eval run eval.yaml
 ```
 
+The target module is imported from the folder you run the command in, and
+the dataset path is relative to the config file.
+
 The CLI prints a summary (pass rate, breakdown by difficulty) and saves the
 full run as JSON in `runs/`. It exits with code 1 if any case fails, so it can
 be used in CI.
@@ -141,7 +144,7 @@ ai_evaluator/
   report.py          terminal summary and JSON output
   cli.py             `ai-eval` command
 tests/               pytest tests
-datasets/            test case files
+examples/            runnable example configs, datasets and bots
 runs/                saved run reports (git ignored)
 ```
 

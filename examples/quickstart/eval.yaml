@@ -1,0 +1,9 @@
+# Run from the repo root:
+#   ai-eval run examples/quickstart/eval.yaml
+
+target: examples.quickstart.bot:ask
+dataset: cases.yaml
+
+# Run on every test case.
+default_checks:
+  - latency: { max_ms: 100 }

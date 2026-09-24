@@ -44,7 +44,7 @@ class Runner:
 
         check_results = []
 
-        for check in self.checks:
+        for check in [*self.checks, *test_case.checks]:
             try:
                 result = check.evaluate(test_case, execution)
             except Exception as error:
